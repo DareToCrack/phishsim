@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>This was a phishing simulation - {{ company }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="landing-body">
+  <main class="landing-card">
+    <h1>&#128680; This was a simulated phishing email</h1>
+    <p class="lead">Hi {{ target.recipient_name }}, you clicked a link in a
+    <strong>security-awareness simulation</strong> run by {{ company }}.
+    Don't worry - no real harm was done, and <strong>nothing you typed was
+    saved</strong>. This page is here to help you spot the real thing next time.</p>
+
+    {% if target.landing_type == 'login' and not submitted %}
+    <section class="fake-login">
+      <h2>Simulated sign-in page</h2>
+      <p class="muted small">This is what a credential-harvesting page looks like.
+      The form below is part of the training: <strong>any values you enter are
+      discarded immediately and never stored</strong>.</p>
+      <form method="post">
+        <label>Email
+          <input type="email" name="email" placeholder="you@company.com" autocomplete="off">
+        </label>
+        <label>Password
+          <input type="password" name="password" placeholder="Password" autocomplete="off">
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+      </form>
+    </section>
+    {% endif %}
+
+    {% if submitted %}
+    <div class="flash flash-error">
+      You submitted the simulated sign-in form. In a real attack, those
+      credentials would now belong to the attacker. Nothing was stored here -
+      but please treat this as a reminder to check the URL before signing in.
+    </div>
+    {% endif %}
+
+    {% if demo_blocked %}
+    <div class="flash flash-info">
+      Submitting is disabled in the read-only demo - no event was recorded.
+      In a real run, submitting here would log a "submitted" event (without
+      storing anything you typed).
+    </div>
+    {% endif %}
+
+    <section>
+      <h2>&#128161; Red flags in the email you received</h2>
+      <p class="muted">Template: <strong>{{ target.template_name }}</strong></p>
+      <ul class="red-flags">
+        {% for flag in red_flags %}
+        <li>{{ flag }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section>
+      <h2>&#9989; How to spot phishing next time</h2>
+      <ol>
+        <li><strong>Check the sender</strong> - the display name can lie; look at the real email address and domain.</li>
+        <li><strong>Hover before you click</strong> - preview the real URL. On mobile, long-press the link.</li>
+        <li><strong>Pause on urgency</strong> - "expires in 24 hours" and "account suspended" are designed to rush you.</li>
+        <li><strong>Verify out of band</strong> - open the app or site yourself instead of clicking an email link.</li>
+        <li><strong>Report it</strong> - use the Report Phishing button in your email client so IT can warn others.</li>
+      </ol>
+    </section>
+
+    <p>
+      <a class="btn btn-primary" href="{{ url_for('track_report', token=token) }}">I understand - mark this as reported</a>
+    </p>
+    <p class="muted small">Campaign: {{ target.campaign_name }} &middot;
+    This simulation is for training only and is run with organisational approval.</p>
+  </main>
+</body>
+</html>

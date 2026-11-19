@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Phishing Simulation Tool{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+{% if default_password %}
+<div class="flash flash-error">
+  &#9888; You are using the default admin password (<code>changeme</code>).
+  Change <code>ADMIN_PASS</code> in <code>.env</code> before any real deployment.
+</div>
+{% endif %}
+
+<section class="stat-grid">
+  <div class="stat-card"><div class="stat-num">{{ stats.campaigns }}</div><div class="stat-label">Campaigns</div></div>
+  <div class="stat-card"><div class="stat-num">{{ stats.sent }}</div><div class="stat-label">Emails sent</div></div>
+  <div class="stat-card"><div class="stat-num">{{ stats.opened }} <span class="muted">({{ stats.open_rate }}%)</span></div><div class="stat-label">Opened</div></div>
+  <div class="stat-card warn"><div class="stat-num">{{ stats.clicked }} <span class="muted">({{ stats.click_rate }}%)</span></div><div class="stat-label">Clicked link</div></div>
+  <div class="stat-card danger"><div class="stat-num">{{ stats.submitted }} <span class="muted">({{ stats.submit_rate }}%)</span></div><div class="stat-label">Submitted credentials</div></div>
+  <div class="stat-card good"><div class="stat-num">{{ stats.reported }} <span class="muted">({{ stats.report_rate }}%)</span></div><div class="stat-label">Reported</div></div>
+  <div class="stat-card risk"><div class="stat-num">{{ stats.risk_score }}/100</div><div class="stat-label">Organisation risk score</div></div>
+</section>
+
+<section class="panels">
+  <div class="panel">
+    <h2>Engagement funnel</h2>
+    <canvas id="funnelChart" height="220"
+      data-sent="{{ stats.sent }}" data-opened="{{ stats.opened }}"
+      data-clicked="{{ stats.clicked }}" data-submitted="{{ stats.submitted }}"
+      data-reported="{{ stats.reported }}"></canvas>
+  </div>
+  <div class="panel">
+    <h2>Recent campaigns</h2>
+    {% if campaigns %}
+    <table>
+      <thead><tr><th>Campaign</th><th>Template</th><th>Targets</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for c in campaigns %}
+        <tr>
+          <td>{{ c.name }}</td>
+          <td>{{ c.template_name }}</td>
+          <td>{{ c.target_count }}</td>
+          <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+          <td><a href="{{ url_for('campaign_detail', campaign_id=c.id) }}">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted">No campaigns yet. <a href="{{ url_for('campaign_new') }}">Create one</a>.</p>
+    {% endif %}
+    {% if not IS_DEMO %}<p><a class="btn btn-primary" href="{{ url_for('campaign_new') }}">+ New campaign</a></p>{% endif %}
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Recent activity</h2>
+  {% if recent_events %}
+  <table>
+    <thead><tr><th>When</th><th>Recipient</th><th>Campaign</th><th>Event</th></tr></thead>
+    <tbody>
+      {% for e in recent_events %}
+      <tr>
+        <td>{{ e.created_at }}</td>
+        <td>{{ e.recipient_name }}</td>
+        <td>{{ e.campaign_name }}</td>
+        <td><span class="badge badge-{{ e.event_type }}">{{ e.event_type }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">No tracked events yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

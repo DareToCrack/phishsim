@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Templates - Phishing Simulation Tool{% endblock %}
+{% block content %}
+<h1>Email Templates</h1>
+<p class="muted">Six realistic simulation templates. Placeholders:
+<code>{{ '{{name}}' }}</code>, <code>{{ '{{company}}' }}</code>,
+<code>{{ '{{link}}' }}</code> (unique tracked link per recipient).</p>
+{% for t in templates %}
+<section class="panel">
+  <h2>{{ t.name }}</h2>
+  <p class="muted">{{ t.category }} &middot; difficulty: {{ t.difficulty }} &middot;
+  triggers: {{ t.triggers }}</p>
+  <p><strong>Subject:</strong> {{ t.subject }}</p>
+  <details>
+    <summary>Preview email body</summary>
+    <div class="email-preview">{{ t.body_html | safe }}</div>
+  </details>
+  <details>
+    <summary>Red flags taught on the landing page</summary>
+    <ul>
+      {% for flag in t.red_flags.split('\n') %}
+      <li>{{ flag }}</li>
+      {% endfor %}
+    </ul>
+  </details>
+</section>
+{% endfor %}
+{% endblock %}

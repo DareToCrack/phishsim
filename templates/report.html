@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Report: {{ campaign.name }} - Phishing Simulation Tool{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<h1>Report: {{ campaign.name }}</h1>
+<p class="muted">Template: <strong>{{ campaign.template_name }}</strong>
+({{ campaign.category }}) &middot; Status: {{ campaign.status }}</p>
+
+<section class="stat-grid">
+  <div class="stat-card"><div class="stat-num">{{ stats.sent }}</div><div class="stat-label">Sent</div></div>
+  <div class="stat-card"><div class="stat-num">{{ stats.opened }} <span class="muted">({{ stats.open_rate }}%)</span></div><div class="stat-label">Opened</div></div>
+  <div class="stat-card warn"><div class="stat-num">{{ stats.clicked }} <span class="muted">({{ stats.click_rate }}%)</span></div><div class="stat-label">Clicked</div></div>
+  <div class="stat-card danger"><div class="stat-num">{{ stats.submitted }} <span class="muted">({{ stats.submit_rate }}%)</span></div><div class="stat-label">Submitted</div></div>
+  <div class="stat-card good"><div class="stat-num">{{ stats.reported }} <span class="muted">({{ stats.report_rate }}%)</span></div><div class="stat-label">Reported</div></div>
+  <div class="stat-card risk"><div class="stat-num">{{ stats.risk_score }}/100</div><div class="stat-label">Risk score</div></div>
+</section>
+
+<p>
+  <a class="btn" href="{{ url_for('report_export', campaign_id=campaign.id) }}">Download CSV export</a>
+  <a class="btn" href="{{ url_for('api_campaign_stats', campaign_id=campaign.id) }}">JSON stats API</a>
+</p>
+
+<section class="panel">
+  <h2>Why they clicked</h2>
+  <h3>Psychological triggers used by this template</h3>
+  <ul>
+    {% for trigger in analysis.triggers %}
+    <li>{{ trigger }}</li>
+    {% endfor %}
+  </ul>
+  <div class="panels">
+    <div>
+      <h3>Time to click</h3>
+      <table>
+        <thead><tr><th>Bucket</th><th>Clicks</th></tr></thead>
+        <tbody>
+          {% for b in analysis.time_to_click %}
+          <tr><td>{{ b.bucket }}</td><td>{{ b.count }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="muted small">Clicks within 1 minute are typically impulse clicks -
+      the recipient acted before checking the sender or link.</p>
+    </div>
+    <div>
+      <h3>Clicks by device</h3>
+      {% if analysis.devices %}
+      <table>
+        <thead><tr><th>Device</th><th>Clicks</th></tr></thead>
+        <tbody>
+          {% for d in analysis.devices %}
+          <tr><td>{{ d.device }}</td><td>{{ d.count }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">No clicks recorded yet.</p>
+      {% endif %}
+      <canvas id="deviceChart" height="160" data-devices='{{ analysis.devices | tojson }}'></canvas>
+    </div>
+  </div>
+
+  <h3>Results by department</h3>
+  <table>
+    <thead><tr><th>Department</th><th>Sent</th><th>Clicked</th><th>Click rate</th><th>Submitted</th><th>Reported</th></tr></thead>
+    <tbody>
+      {% for d in analysis.by_department %}
+      <tr>
+        <td>{{ d.department }}</td>
+        <td>{{ d.sent }}</td>
+        <td>{{ d.clicked }}</td>
+        <td>{{ d.click_rate }}%</td>
+        <td>{{ d.submitted }}</td>
+        <td>{{ d.reported }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if analysis.repeat_clickers %}
+  <h3>Repeat clickers (clicked in 2+ campaigns)</h3>
+  <ul>
+    {% for c in analysis.repeat_clickers %}
+    <li>{{ c.name }} ({{ c.email }}) - {{ c.campaigns_clicked }} campaigns</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Recommendations</h2>
+  {% for s in suggestions %}
+  <div class="suggestion suggestion-{{ s.priority }}">
+    <span class="badge badge-{{ s.priority }}">{{ s.priority }}</span>
+    <strong>{{ s.title }}</strong>
+    <span class="muted">- {{ s.audience }}</span>
+    <p>{{ s.detail }}</p>
+  </div>
+  {% endfor %}
+</section>
+
+<section class="panel">
+  <h2>Per-recipient timeline</h2>
+  <form method="get" class="filter-row">
+    <label>Department
+      <select name="department">
+        <option value="">All</option>
+        {% for d in departments %}
+        <option value="{{ d }}" {% if d == dept_filter %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Status
+      <select name="status">
+        <option value="">All</option>
+        {% for s in ['sent', 'opened', 'clicked', 'submitted', 'reported', 'pending'] %}
+        <option value="{{ s }}" {% if s == status_filter %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn">Filter</button>
+  </form>
+  <table>
+    <thead><tr><th>Name</th><th>Department</th><th>Status</th><th>Sent</th><th>Opened</th><th>Clicked</th><th>Time to click</th><th>Submitted</th><th>Reported</th></tr></thead>
+    <tbody>
+      {% for r in table %}
+      <tr>
+        <td>{{ r.name }}<br><span class="muted small">{{ r.email }}</span></td>
+        <td>{{ r.department }}</td>
+        <td><span class="badge badge-{{ r.status }}">{{ r.status }}</span></td>
+        <td>{{ r.sent_at or '-' }}</td>
+        <td>{{ r.opened_at or '-' }}</td>
+        <td>{{ r.clicked_at or '-' }}</td>
+        <td>
+          {% if r.time_to_click is not none %}
+            {% if r.time_to_click < 60 %}{{ r.time_to_click }}s
+            {% elif r.time_to_click < 3600 %}{{ (r.time_to_click // 60) }}m
+            {% else %}{{ (r.time_to_click // 3600) }}h{% endif %}
+          {% else %}-{% endif %}
+        </td>
+        <td>{{ r.submitted_at or '-' }}</td>
+        <td>{{ r.reported_at or '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/report.js') }}"></script>
+{% endblock %}

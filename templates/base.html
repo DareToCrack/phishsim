@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Phishing Simulation Tool{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('dashboard') }}">&#128737; PhishSim <span>Security Awareness Training</span></a>
+    {% if session.get('logged_in') %}
+    <nav>
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('campaigns') }}">Campaigns</a>
+      <a href="{{ url_for('recipients') }}">Recipients</a>
+      <a href="{{ url_for('templates') }}">Templates</a>
+      <a href="{{ url_for('logout') }}">Logout ({{ session.get('user') }})</a>
+    </nav>
+    {% endif %}
+  </header>
+
+  {% if IS_DEMO %}
+  <div class="banner banner-demo">
+    &#128065; DEMO MODE - read-only tour. You can explore the dashboard,
+    campaigns, reports and templates, but creating, sending, deleting
+    and submitting are disabled. Data is demo data and resets regularly.
+  </div>
+  {% endif %}
+  {% if DRY_RUN %}
+  <div class="banner banner-dryrun">
+    &#128679; DRY-RUN MODE - no real email is sent. Messages are written to
+    <code>outbox/</code> as .eml files. Set <code>DRY_RUN=false</code> in
+    <code>.env</code> only with written authorization.
+  </div>
+  {% else %}
+  <div class="banner banner-live">
+    &#9888; LIVE MODE - real emails will be sent. Only use with written
+    authorization and an allowlisted domain list.
+  </div>
+  {% endif %}
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <p>For authorized security-awareness training only. Only simulate against
+    your own organisation with written approval. This tool never stores
+    passwords or credential values.</p>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

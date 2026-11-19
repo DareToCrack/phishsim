@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}New Campaign - Phishing Simulation Tool{% endblock %}
+{% block content %}
+<h1>New Campaign</h1>
+<form method="post" class="form-card">
+  <label>Campaign name
+    <input type="text" name="name" placeholder="e.g. Q1 Password Reset Simulation" required>
+  </label>
+
+  <label>Email template
+    <select name="template_id" required>
+      <option value="">-- choose a template --</option>
+      {% for t in templates %}
+      <option value="{{ t.id }}">{{ t.name }} ({{ t.difficulty }}) - {{ t.category }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <div class="form-row">
+    <label>Sender name
+      <input type="text" name="sender_name" placeholder="IT Helpdesk" required>
+    </label>
+    <label>Sender email
+      <input type="email" name="sender_email" placeholder="it-helpdesk@example.com" required>
+    </label>
+  </div>
+
+  <label>Subject override <span class="muted">(optional - uses template subject if blank)</span>
+    <input type="text" name="subject" placeholder="Leave blank to use the template subject">
+  </label>
+
+  <label>Landing page type
+    <select name="landing_type">
+      <option value="login">Simulated login (educational - never stores credentials)</option>
+      <option value="notice">Notice page only</option>
+    </select>
+  </label>
+
+  <fieldset>
+    <legend>Recipients</legend>
+    {% if recipients %}
+    <p class="muted small">Tick the employees to include in this simulation.</p>
+    <div class="checklist">
+      {% for r in recipients %}
+      <label class="check-item">
+        <input type="checkbox" name="recipient_ids" value="{{ r.id }}">
+        {{ r.name }} <span class="muted">&lt;{{ r.email }}&gt; - {{ r.department }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted">No recipients yet. <a href="{{ url_for('recipients') }}">Add recipients</a> first.</p>
+    {% endif %}
+  </fieldset>
+
+  <button type="submit" class="btn btn-primary">Create campaign (draft)</button>
+  <a class="btn" href="{{ url_for('campaigns') }}">Cancel</a>
+</form>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ campaign.name }} - Phishing Simulation Tool{% endblock %}
+{% block content %}
+<h1>{{ campaign.name }}</h1>
+<p class="muted">
+  Template: <strong>{{ campaign.template_name }}</strong> ({{ campaign.category }},
+  {{ campaign.difficulty }}) &middot;
+  Sender: {{ campaign.sender_name }} &lt;{{ campaign.sender_email }}&gt; &middot;
+  Status: <span class="badge badge-{{ campaign.status }}">{{ campaign.status }}</span>
+</p>
+
+<section class="stat-grid">
+  <div class="stat-card"><div class="stat-num">{{ stats.sent }}</div><div class="stat-label">Sent</div></div>
+  <div class="stat-card"><div class="stat-num">{{ stats.opened }} <span class="muted">({{ stats.open_rate }}%)</span></div><div class="stat-label">Opened</div></div>
+  <div class="stat-card warn"><div class="stat-num">{{ stats.clicked }} <span class="muted">({{ stats.click_rate }}%)</span></div><div class="stat-label">Clicked</div></div>
+  <div class="stat-card danger"><div class="stat-num">{{ stats.submitted }} <span class="muted">({{ stats.submit_rate }}%)</span></div><div class="stat-label">Submitted</div></div>
+  <div class="stat-card good"><div class="stat-num">{{ stats.reported }} <span class="muted">({{ stats.report_rate }}%)</span></div><div class="stat-label">Reported</div></div>
+  <div class="stat-card risk"><div class="stat-num">{{ stats.risk_score }}/100</div><div class="stat-label">Risk score</div></div>
+</section>
+
+<p>
+  <a class="btn btn-primary" href="{{ url_for('report', campaign_id=campaign.id) }}">View full report</a>
+  <a class="btn" href="{{ url_for('report_export', campaign_id=campaign.id) }}">Download CSV</a>
+</p>
+
+{% if campaign.status == 'draft' and not IS_DEMO %}
+<section class="panel send-panel">
+  <h2>Send this campaign</h2>
+  {% if dry_run %}
+  <p class="info-box">DRY-RUN is on: sending will write .eml files to
+  <code>outbox/</code> and send <strong>no real email</strong>.</p>
+  {% else %}
+  <p class="warning-box">LIVE MODE: real emails will be sent to the targets below.
+  Recipient domains must be in the allowlist:
+  <code>{{ allowed_domains | join(', ') or '(none configured)' }}</code>.</p>
+  {% endif %}
+  <form method="post" action="{{ url_for('campaign_send', campaign_id=campaign.id) }}">
+    <label class="check-item">
+      <input type="checkbox" name="authorized" value="yes" required>
+      I confirm I have <strong>written authorization</strong> to run this phishing
+      simulation against these recipients, who are employees / test accounts of
+      my own organisation.
+    </label>
+    <button type="submit" class="btn btn-danger">Send campaign now</button>
+  </form>
+</section>
+{% endif %}
+
+<section class="panel">
+  <h2>Targets ({{ targets | length }})</h2>
+  <table>
+    <thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Events</th></tr></thead>
+    <tbody>
+      {% for t in targets %}
+      <tr>
+        <td>{{ t.name }}</td>
+        <td>{{ t.email }}</td>
+        <td>{{ t.department }}</td>
+        <td>
+          {% if t.events %}
+            {% for ev in t.events.split(',') %}
+            <span class="badge badge-{{ ev }}">{{ ev }}</span>
+            {% endfor %}
+          {% else %}
+          <span class="muted">no events yet</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if campaign.status == 'draft' and not IS_DEMO %}
+<form method="post" action="{{ url_for('campaign_delete', campaign_id=campaign.id) }}"
+      data-confirm="Delete this draft campaign?">
+  <button type="submit" class="btn btn-danger-outline">Delete campaign</button>
+</form>
+{% endif %}
+{% endblock %}

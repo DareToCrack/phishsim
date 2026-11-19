@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Recipients - Phishing Simulation Tool{% endblock %}
+{% block content %}
+<h1>Recipients</h1>
+{% if IS_DEMO %}
+<p class="info-box">Demo mode is read-only: adding and importing recipients
+is disabled. The list below is sample data.</p>
+{% else %}
+<div class="panels">
+  <section class="panel">
+    <h2>Add one recipient</h2>
+    <form method="post" class="form-card">
+      <label>Name <input type="text" name="name" required></label>
+      <label>Email <input type="email" name="email" required></label>
+      <label>Department <input type="text" name="department" value="General"></label>
+      <button type="submit" class="btn btn-primary">Add recipient</button>
+    </form>
+  </section>
+  <section class="panel">
+    <h2>Import from CSV</h2>
+    <p class="muted">CSV columns: <code>name,email,department,group</code>.
+    A sample file is in <code>sample_data/employees.csv</code>.</p>
+    <form method="post" enctype="multipart/form-data" class="form-card">
+      <label>CSV file <input type="file" name="csv_file" accept=".csv" required></label>
+      <button type="submit" class="btn btn-primary">Import CSV</button>
+    </form>
+  </section>
+</div>
+{% endif %}
+
+<section class="panel">
+  <h2>All recipients ({{ recipients | length }})</h2>
+  {% if recipients %}
+  <table>
+    <thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Group</th></tr></thead>
+    <tbody>
+      {% for r in recipients %}
+      <tr><td>{{ r.name }}</td><td>{{ r.email }}</td><td>{{ r.department }}</td><td>{{ r.group_name }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">No recipients yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
