@@ -16,8 +16,10 @@ paid service required.
 
 ## Live demo
 
-**Try it live: https://phishsim.vercel.app** _(placeholder — replaced with the
-real deployment URL after the first Vercel deploy)_
+**Try it live: https://phishsim-project-s-of-jyothsna-6125.vercel.app**
+
+> `phishsim.vercel.app` belongs to an unrelated project — use the
+> team-scoped URL above.
 
 Click **Explore live demo** on the login page — no password needed. The demo
 is **read-only**: you can browse the dashboard, campaigns, reports and

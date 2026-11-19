@@ -19,6 +19,7 @@ Safety guarantees built into this app:
 
 import csv
 import io
+import os
 import secrets
 from functools import wraps
 
@@ -754,8 +755,27 @@ def ensure_templates(app):
             db.commit()
 
 
+# ----------------------------------------------------------------------
+# Vercel framework entrypoint
+# ----------------------------------------------------------------------
+# Vercel's Flask support looks for a top-level ``app`` in app.py (see
+# https://vercel.com/docs/frameworks/backend/flask) and serves it
+# directly, with the original request path intact. (The earlier
+# /api/index.py + vercel.json rewrite approach made Flask see every
+# request as /api/index.py, so all routes returned 404.)
+# Import-time work is limited to creating tables/templates (both
+# idempotent). Demo seeding runs only on Vercel (VERCEL=1), where the
+# /tmp database is ephemeral and cold starts would otherwise be blank.
+app = create_app()
+init_db(app)
+ensure_templates(app)
+
+if os.environ.get("VERCEL") == "1":
+    from seed import seed_demo
+
+    seed_demo(app.config["DATABASE"])
+
+
 if __name__ == "__main__":
-    app = create_app()
-    init_db(app)
-    ensure_templates(app)
+    # Local dev: the module-level app above is already initialised.
     app.run(host="127.0.0.1", port=5000, debug=True)
