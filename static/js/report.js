@@ -17,7 +17,7 @@
       labels: devices.map(function (d) { return d.device; }),
       datasets: [{
         data: devices.map(function (d) { return d.count; }),
-        backgroundColor: ["#2563eb", "#38bdf8", "#f59e0b", "#94a3b8"]
+        backgroundColor: ["#2563eb", "#7ea8dd", "#d9a441", "#a8a29a"]
       }]
     },
     options: { responsive: true, plugins: { legend: { position: "bottom" } } }

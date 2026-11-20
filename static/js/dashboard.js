@@ -12,7 +12,7 @@
       labels: ["Sent", "Opened", "Clicked", "Submitted", "Reported"],
       datasets: [{
         data: [num(d.sent), num(d.opened), num(d.clicked), num(d.submitted), num(d.reported)],
-        backgroundColor: ["#2563eb", "#38bdf8", "#f59e0b", "#dc2626", "#16a34a"]
+        backgroundColor: ["#2563eb", "#7ea8dd", "#d9a441", "#d97757", "#5da87f"]
       }]
     },
     options: {
